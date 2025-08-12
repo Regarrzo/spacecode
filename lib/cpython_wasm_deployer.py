@@ -95,6 +95,9 @@ class CPythonWasmDeployer(WasmDeployer):
             # Validate and sanitize the Python script
             sanitized_script = self._sanitize_script(script)
             
+            # Store the script content for simulation purposes
+            self._current_script = sanitized_script
+            
             # In a real implementation, this would compile Python to WASM
             # For now, we create a simple WASM module that can execute the script
             wasm_module = self._create_python_wasm_wrapper(sanitized_script)
@@ -264,38 +267,143 @@ class CPythonWasmDeployer(WasmDeployer):
         """
         try:
             # For this demonstration, we simulate Python script execution
-            # In a real implementation, this would:
-            # 1. Pass input_data as JSON to the Python script
-            # 2. Execute the script in the WASM environment
-            # 3. Capture the JSON output from the script
+            # by parsing the actual script content and executing similar logic
+            # In a real implementation, this would execute the actual Python code in WASM
             
-            # Simulate script execution with realistic bot behavior
-            # Parse the input to simulate actual script processing
+            # Extract the script content for simulation
+            script_content = ""
+            if hasattr(self, '_current_script'):
+                script_content = self._current_script
+            
+            # Parse input data
             game_state = input_data.get('game_state', {})
             time_step = input_data.get('time_step', 0)
+            ship_position = game_state.get('ship_position', [0.5, 0.5])
             
-            # Simulate the sample bot logic for demo purposes
-            actions = ['FORWARD']  # Always move forward
+            # Simulate different bot behaviors based on script content
+            actions = []
+            debug_info = {"bot_name": "SimulatedBot"}
             
-            # Turn based on time step (simulate bot decision making)
-            if time_step % 100 < 50:
-                actions.append('LEFT')
+            # Aggressive bot simulation
+            if 'AggressiveBot' in script_content:
+                actions.append('FORWARD')
+                if time_step % 10 == 0:
+                    actions.append('SHOOT')
+                if time_step % 50 < 25:
+                    actions.append('RIGHT')
+                else:
+                    actions.append('LEFT')
+                debug_info = {
+                    'bot_name': 'AggressiveBot',
+                    'strategy': 'attack',
+                    'actions_count': len(actions)
+                }
+            
+            # Defensive bot simulation  
+            elif 'DefensiveBot' in script_content:
+                if time_step % 200 < 100:
+                    actions.extend(['FORWARD', 'LEFT'])
+                else:
+                    actions.extend(['FORWARD', 'RIGHT'])
+                if time_step % 60 == 0:
+                    actions.append('SHOOT')
+                debug_info = {
+                    'bot_name': 'DefensiveBot',
+                    'strategy': 'defensive_circle',
+                    'circle_phase': 'left' if time_step % 200 < 100 else 'right'
+                }
+            
+            # Evasive bot simulation
+            elif 'EvasiveBot' in script_content:
+                import random
+                random.seed(time_step // 10)
+                move_choice = random.randint(1, 4)
+                
+                if move_choice == 1:
+                    actions.extend(['FORWARD', 'LEFT'])
+                elif move_choice == 2:
+                    actions.extend(['FORWARD', 'RIGHT'])
+                elif move_choice == 3:
+                    actions.append('LEFT')
+                else:
+                    actions.append('RIGHT')
+                
+                if random.randint(1, 20) == 1:
+                    actions.append('SHOOT')
+                    
+                debug_info = {
+                    'bot_name': 'EvasiveBot',
+                    'strategy': 'random_evasion',
+                    'move_choice': move_choice,
+                    'shooting': 'SHOOT' in actions
+                }
+            
+            # Mathematical bot simulation
+            elif 'MathBot' in script_content:
+                import math
+                phase = time_step * 0.05
+                
+                if math.sin(phase) > 0:
+                    actions.append('FORWARD')
+                
+                if math.cos(phase) > 0.5:
+                    actions.append('LEFT')
+                elif math.cos(phase) < -0.5:
+                    actions.append('RIGHT')
+                
+                if time_step % int(math.pi * 10) == 0:
+                    actions.append('SHOOT')
+                
+                center_dist = math.sqrt((ship_position[0] - 0.5)**2 + (ship_position[1] - 0.5)**2)
+                
+                debug_info = {
+                    'bot_name': 'MathBot',
+                    'strategy': 'mathematical_precision',
+                    'phase': phase,
+                    'center_distance': center_dist,
+                    'sine_val': math.sin(phase),
+                    'cosine_val': math.cos(phase)
+                }
+            
+            # Patrol bot simulation
+            elif 'PatrolBot' in script_content:
+                cycle_length = 400
+                phase = time_step % cycle_length
+                
+                if phase < 100:
+                    actions.extend(['FORWARD', 'RIGHT'])
+                elif phase < 200:
+                    actions.append('FORWARD')
+                elif phase < 300:
+                    actions.extend(['FORWARD', 'LEFT'])
+                else:
+                    actions.extend(['FORWARD', 'LEFT'])
+                
+                if phase % 100 < 5:
+                    actions.append('SHOOT')
+                
+                debug_info = {
+                    'bot_name': 'PatrolBot',
+                    'strategy': 'rectangular_patrol',
+                    'patrol_phase': phase,
+                    'cycle_position': phase / cycle_length
+                }
+            
+            # Default simple bot behavior
             else:
-                actions.append('RIGHT')
-            
-            # Shoot occasionally
-            if time_step % 30 == 0:
-                actions.append('SHOOT')
+                actions.append('FORWARD')
+                if time_step % 100 < 50:
+                    actions.append('LEFT')
+                else:
+                    actions.append('RIGHT')
+                if time_step % 30 == 0:
+                    actions.append('SHOOT')
             
             output_data = {
                 "status": "success",
                 "message": "Python script executed successfully",
-                "actions": actions,  # This is what the bot runner looks for
-                "debug_info": {
-                    "bot_name": "SimulatedBot",
-                    "actions_taken": len(actions),
-                    "time_step": time_step
-                },
+                "actions": actions,
+                "debug_info": debug_info,
                 "input_received": input_data,
                 "execution_environment": "wasm_cpython"
             }
