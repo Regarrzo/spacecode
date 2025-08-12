@@ -73,11 +73,11 @@ class Ship:
     '''
     def __init__(self, physics_object: PhysicsObject):
         self.physics_object: PhysicsObject = physics_object
-
         
 
 class Game:
     def __init__(self):
         pass
 
-    def step(self, dt: float)
+    def step(self, dt: float):
+        pass
