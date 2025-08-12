@@ -1,9 +1,5 @@
 '''
 Game physics logic and simulation
-
-Some notes:
-- Coordinates are all between 0 and 1
-- 0,0 is the bottom left corner and 1,1 is the top right corner
 '''
 
 from __future__ import annotations
@@ -11,6 +7,7 @@ from typing import *
 from dataclasses import dataclass
 from enum import Enum, auto
 
+import math
 import cmath
 import itertools
 
@@ -23,6 +20,8 @@ class SimConfig:
     world_max: complex = 1+1j
     ship_thrust_force: float = 0.01
     ship_torque: float = 0.01
+    ship_vision_cone: float = math.radians(30) # 30 degrees in either direction
+    ship_vision_reach: float = 0.5
     seed: Optional[int] = None
 
 class Action(Enum):
@@ -63,7 +62,41 @@ class Body:
     @property
     def rot_accel(self) -> float:
         return self.torque / self.inertia 
+    
+    def relative_angle_to(self, other: Body) -> float:
+        diff = other.pos - self.pos
 
+        return cmath.phase(diff / self.rot)
+    
+    def distance_to(self, other: Body) -> float:
+        return abs(other.pos - self.pos)
+
+@dataclass
+class BodyView:
+    '''
+    Observable state of a body for each bot
+    '''
+    pos: complex
+    vel: complex
+    rot: complex
+    rot_vel: complex
+    radius: float
+    mass: float
+
+    @staticmethod
+    def from_origin_and_body(origin: Body, body: Body):
+        '''
+        Gives a relative description of body's position from the view of origin
+        '''
+        pos = body.pos - origin.pos
+        vel = body.vel
+        rot = body.rot
+        rot_vel = body.rot / body.old_rot
+        radius = body.radius
+        mass = body.mass
+
+        return BodyView(pos, vel, rot, rot_vel, radius, mass)
+        
 
 class PhysicsSystem:
     def __init__(self, cfg: SimConfig):
@@ -74,7 +107,7 @@ class PhysicsSystem:
         body.torque = 0.0
 
     def intersects(self, a: Body, b: Body) -> bool:
-        return abs(b.pos - a.pos) <= a.radius + b.radius
+        return a.distance_to(b) <= a.radius + b.radius
     
     def _rotational_verlet(self, body: Body, dt) -> complex:
         next_rot = body.rot**2 * body.old_rot.conjugate() * cmath.rect(1.0, body.rot_accel * dt**2)
@@ -98,7 +131,7 @@ class PhysicsSystem:
         self.clear_forces(body)
 
     def compute_attraction_force_magnitude(self, a: Body, b: Body) -> float:
-        return (self.cfg.gravity_const * a.mass + b.mass) / max(abs(b.pos - a.pos), EPS)**2
+        return (self.cfg.gravity_const * a.mass * b.mass) / max(a.distance_to(b), EPS)**2
     
     
 class Ship(Body):
@@ -113,7 +146,9 @@ class Ship(Body):
     def apply_rotational_force(self, torque: float):
         self.torque += torque
 
-    
+
+
+
 class Game:
     def __init__(self, cfg: SimConfig = SimConfig()) -> None:
         self.bodies: List[Body] = [] # this could be a set too but list makes it more deterministic
@@ -146,3 +181,29 @@ class Game:
         self._process_gravity()
 
         self.apply_all(dt)
+
+
+    # TODO: Make this generate views of walls
+    def generate_relative_view(self, origin: Ship):
+        '''
+        Generates a view of the gamestate from ship's perspective to pass on to the bots.
+        '''
+        view = {}
+
+        for other in self.bodies:
+            if origin.distance_to(other) > self.phys.cfg.ship_vision_reach:
+                continue
+
+            if origin.relative_angle_to(other) > self.phys.cfg.ship_vision_cone:
+                continue
+
+            body_view = BodyView.from_origin_and_body(origin, other)
+            view[type(other)] = body_view
+        
+        return view
+            
+
+            
+
+            
+
