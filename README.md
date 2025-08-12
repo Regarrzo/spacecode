@@ -15,7 +15,7 @@ All components:
 - some developer tools to make it easier to develop bots, for example allowing running unsandboxed code locally to allow for debugging
 
 Other things:
-- reply mostly on the Python standard library for everything that is feasible
+- rely mostly on the Python standard library for everything that is feasible
   - Why: this makes contributing easier and also makes bot development itself easier
 - make sure bot developers only need a singular import that contains everything they need. It should be as easy as possible to set up a bot with very very little boilerplate necessary
   - Why: having less hurdles makes it more likely that anyone will actually be interested in making a bot for this
