@@ -76,7 +76,7 @@ class Ship:
         
 
 class Game:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def step(self, dt: float):
