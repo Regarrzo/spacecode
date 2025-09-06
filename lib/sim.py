@@ -3,13 +3,14 @@ Game physics logic and simulation
 '''
 
 from __future__ import annotations
-from typing import *
+from typing import * # pyright: ignore[reportWildcardImportFromLibrary]
 from dataclasses import dataclass
 from enum import Enum, auto
 
 import math
 import cmath
 import itertools
+import util
 
 EPS = 1e-5
 
@@ -29,6 +30,7 @@ class Action(Enum):
     LEFT = auto()
     RIGHT = auto()
     SHOOT = auto()
+
 
 @dataclass(eq=False)
 class Body:
@@ -89,7 +91,7 @@ class BodyView:
         Gives a relative description of body's position from the view of origin
         '''
         pos = body.pos - origin.pos
-        vel = body.vel
+        vel = body.old_pos - body.pos
         rot = body.rot
         rot_vel = body.rot / body.old_rot
         radius = body.radius
@@ -97,7 +99,6 @@ class BodyView:
 
         return BodyView(pos, vel, rot, rot_vel, radius, mass)
         
-
 class PhysicsSystem:
     def __init__(self, cfg: SimConfig):
         self.cfg: SimConfig = cfg
@@ -147,8 +148,6 @@ class Ship(Body):
         self.torque += torque
 
 
-
-
 class Game:
     def __init__(self, cfg: SimConfig = SimConfig()) -> None:
         self.bodies: List[Body] = [] # this could be a set too but list makes it more deterministic
@@ -182,14 +181,12 @@ class Game:
 
         self.apply_all(dt)
 
-
-    # TODO: Make this generate views of walls
     def generate_relative_view(self, origin: Ship):
         '''
         Generates a view of the gamestate from ship's perspective to pass on to the bots.
         '''
-        view = {}
-
+        bodies_view = {}
+        
         for other in self.bodies:
             if origin.distance_to(other) > self.phys.cfg.ship_vision_reach:
                 continue
@@ -198,12 +195,21 @@ class Game:
                 continue
 
             body_view = BodyView.from_origin_and_body(origin, other)
-            view[type(other)] = body_view
+            bodies_view[type(other)] = body_view
+
+        top_left = self.phys.cfg.world_min
+        bottom_right = self.phys.cfg.world_max
+        top_right = bottom_right.real + top_left.imag
+        bottom_left = top_left.real + bottom_right.imag
+
+        walls = [(top_left, top_right), 
+                 (top_right, bottom_right), 
+                 (bottom_right, bottom_left), 
+                 (bottom_left, top_left)]
+
+        raycasts = [util.raycast(origin.pos, origin.rot, l1, l2) for (l1, l2) in walls]
+        raycasts = [cast for cast in raycasts if cast is not None]
+        distances = [abs(cast - origin.pos) for cast in raycasts]
+        front_wall_view = min(distances)
         
-        return view
-            
-
-            
-
-            
-
+        return bodies_view, front_wall_view
