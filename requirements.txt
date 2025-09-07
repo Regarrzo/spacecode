@@ -1,2 +1,4 @@
 dearpygui
 wasmtime
+discord.py
+python-dotenv
