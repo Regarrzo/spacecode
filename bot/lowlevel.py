@@ -1,10 +1,13 @@
+from typing import Any
+import json
+
 # We generally communicate to the host using standard input. Wrappers are to allow a later switch
 # to something with less latency.
-def send(message: str):
+def send(object: Any):
     '''
-    Send a message to the host.
+    Send an object to the host. The object must be serializable.
     '''
-    print(message)
+    print(json.dumps(object))
 
 def receive() -> str:
     '''

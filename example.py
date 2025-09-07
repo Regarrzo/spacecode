@@ -1,6 +1,12 @@
+import bot.highlevel as ship
+import asyncio
 
-def on_init():
+
+async def on_ready():
     pass
 
-def on_step():
-    return "shoot", "forward"
+async def on_update():
+    pass
+
+
+asyncio.run(ship.main(on_ready, on_update))
