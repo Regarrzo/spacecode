@@ -1,33 +1,45 @@
 #pragma once
 
-// ### USER IMPLEMENTED FUNCTIONS ###
-__attribute__((export_name("init")))
+__attribute__((import_name("send_action")))
+/**
+ * @brief Send an action to the host. Only the most recently sent action will be executed at the end of the tick.
+ * @details 
+ */
+void sendAction(float x_accel, float y_accel);
+
+typedef struct Config {
+    float boundaryRadius;
+    float puckRadius;
+    float maxPuckAccel;
+    float damping;
+} Config;
+
+typedef struct State {
+    float xPos, yPos, xVel, yVel;
+    float enemyXPos, enemyYPos, enemyXVel, enemyYVel;
+} State;
+
 /**
  * @brief Called at the beginning of every match
  * @details This might contain some stuff like initial position, enemy count, 
  */
-void init();
+void init(Config cfg);
 
-__attribute__((export_name("update")))
 /**
- * @brief Called before every tick. You should call sendActions in here to set your next move.
+ * @brief Called before every tick. You should call sendAction in here to set your next move.
  * @details 
  */
-void update();
+void update(State state);
 
 
-// ### LIBRARY FUNCTIONS AND DEFINITIONS ###
-#define ACTION_THRUST   0b001
-#define ACTION_LEFT     0b010
-#define ACTION_RIGHT    0b100
+__attribute__((export_name("init")))
+void _init(float boundaryRadius, float puckRadius, float maxPuckAccel, float damping) {
+    Config cfg = {boundaryRadius, puckRadius, maxPuckAccel, damping};
+    init(cfg);
+}
 
-__attribute__((import_name("send_actions")))
-/**
- * @brief Sends control actions to the host environment.
- * @details This only needs to be sent once per tick. Only the latest sent actions are executed
- * at the end of the tick.
- * @param actionFlags A bitmask of actions to perform. Can be a combination of
- *                    ACTION_THRUST, ACTION_LEFT, and ACTION_RIGHT.
- */
-void sendActions(int actionFlags);
-
+__attribute__((export_name("update")))
+void _update(float xPos, float yPos, float xVel, float yVel, float enemyXPos, float enemyYPos, float enemyXVel, float enemyYVel) {
+    State state = { xPos, yPos, xVel, yVel, enemyXPos, enemyYPos, enemyXVel, enemyYVel };
+    update(state);
+}

@@ -45,8 +45,6 @@ async def main(on_ready, on_update):
     '''
     Runs the bot in a loop compliant with the protocol.
     '''
-
-
     while True:
         msg = json.loads(lowlevel.receive())
         
@@ -59,3 +57,4 @@ async def main(on_ready, on_update):
             case "step":
                 await on_update()
                 submit_actions()
+

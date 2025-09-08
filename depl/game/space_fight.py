@@ -1,5 +1,5 @@
 '''
-Game physics logic and simulation
+UNUSED FOR NOW
 '''
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import util
 EPS = 1e-5
 
 @dataclass(frozen=True)
-class SimConfig:
+class SimConfig: 
     gravity_const: float = 1.0
     world_min: complex = 0+0j
     world_max: complex = 1+1j
