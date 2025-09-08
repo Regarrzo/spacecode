@@ -7,6 +7,13 @@ __attribute__((import_name("send_action")))
  */
 void sendAction(float x_accel, float y_accel);
 
+__attribute__((import_name("set_color")))
+/**
+ * @brief Sets the color of your puck. All values should be between 0 and 1.
+ * @details 
+ */
+void setColor(float r, float g, float b);
+
 typedef struct Config {
     float boundaryRadius;
     float puckRadius;

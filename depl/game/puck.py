@@ -62,7 +62,7 @@ class Puck:
     
 class Environment:
     def __init__(self, players, config=Config()):
-        self.players: Dict[Puck, Puck] = players
+        self.players: List = players
         self.config: Config = config
 
 
@@ -92,71 +92,15 @@ class Environment:
         # velocity update
         for p in self.players:
             p.pos += p.vel * dt
-            p.vel *= config.damping ** dt
+            p.vel *= self.config.damping ** dt
 
         # apply actions
         for puck, action in actions.items():
             self.apply_action(dt, puck, action)
     
-pygame.init()
-WIDTH, HEIGHT = 600, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-clock = pygame.time.Clock()
-
-config = Config()
-scale = WIDTH / (2 * config.boundary_radius)  # map radius 1.0 → screen
-center = WIDTH // 2, HEIGHT // 2
-
-# Create two pucks
-p1 = Puck(pos=complex(-0.3, 0), vel=0+0j)
-p2 = Puck(pos=complex(0.3, 0), vel=0+0j)
-p3 = Puck(pos=complex(0, 0.3))
-env = Environment([p1, p2, p3], config)
-
-def to_screen(pos: complex) -> tuple[int, int]:
-    return int(center[0] + pos.real * scale), int(center[1] - pos.imag * scale)
-
-def draw():
-    screen.fill((30, 30, 30))
-    # boundary circle
-    pygame.draw.circle(screen, (200, 200, 200), center, int(config.boundary_radius * scale), 2)
-    # pucks
-    for puck, color in [(p1, (200, 50, 50)), (p2, (50, 50, 200)), (p3, (255, 50, 200))]:
-        pygame.draw.circle(screen, color, to_screen(puck.pos), int(config.puck_radius * scale))
-
-def get_actions() -> dict[Puck, complex]:
-    keys = pygame.key.get_pressed()
-    a1 = 0+0j
-    a2 = 0+0j
-
-    # WASD for p1
-    if keys[pygame.K_w]: a1 += 0+1j
-    if keys[pygame.K_s]: a1 += 0-1j
-    if keys[pygame.K_a]: a1 += -1+0j
-    if keys[pygame.K_d]: a1 += 1+0j
-
-    # Arrows for p2
-    if keys[pygame.K_UP]: a2 += 0+1j
-    if keys[pygame.K_DOWN]: a2 += 0-1j
-    if keys[pygame.K_LEFT]: a2 += -1+0j
-    if keys[pygame.K_RIGHT]: a2 += 1+0j
-
-    return {p1: a1, p2: a2}
-
-# --- Main loop ---
-
-if __name__ == "__main__":
-    while True:
-        dt = clock.tick(60) / 1000.0  # seconds
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        actions = get_actions()
-        env.update(dt, actions)
-        print(actions)
-
-        draw()
-        pygame.display.flip()
+    def state(self, perspective: Puck):
+        enemies = self.players.copy()
+        enemies.remove(perspective)
+        assert len(enemies) == 1
+        enemy = enemies.pop()
+        return State(perspective.pos, perspective.vel, enemy.pos, enemy.vel)
