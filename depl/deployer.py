@@ -41,6 +41,8 @@ class BotSandbox:
         self.wasm_update = self._instance.exports(self._store)["update"]
         self.action = 0+0j
         self.color = 1.0, 1.0, 1.0
+
+        
         
     def init(self, config: Config):
         self.wasm_init(self._store, *astuple(config))

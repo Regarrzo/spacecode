@@ -1,4 +1,5 @@
 #include "math.h"
+#include "stdio.h"
 #include "bot.h"
 
 Config config;
@@ -9,6 +10,7 @@ void init(Config cfg) {
 }
 
 void update(State state) {
+
     float xDiff = state.enemyXPos - state.xPos;
     float yDiff = state.enemyYPos - state.yPos;
 
@@ -16,6 +18,7 @@ void update(State state) {
         return;
 
     float mag = sqrt(xDiff * xDiff + yDiff * yDiff);
+    printf("test\n");
     
     sendAction((xDiff / mag) * config.maxPuckAccel, (yDiff / mag) * config.maxPuckAccel);
 }
