@@ -7,8 +7,8 @@ WASI_SDK_DIR := wasi-sdk
 
 CC := $(WASI_SDK_DIR)/bin/clang
 CFLAGS := --target=wasm32-wasi -Os
-TARGET := simple_rammer.wasm
-SRC := simple_rammer.c
+TARGET := print.wasm
+SRC := print.c
 
 all: $(TARGET)
 

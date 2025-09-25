@@ -3,4 +3,4 @@ __pycache__
 wasi-sdk/
 .build
 *.rlib
-debug
+debug 

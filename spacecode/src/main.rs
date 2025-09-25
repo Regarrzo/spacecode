@@ -1,7 +1,10 @@
 use wasmtime::*;
+mod sandbox;
+mod manager;
 
 fn main() -> wasmtime::Result<()> {
     let engine = Engine::default();
+
 
     // Modules can be compiled through either the text or binary format
     let wat = r#"

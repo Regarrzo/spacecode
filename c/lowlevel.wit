@@ -1,0 +1,6 @@
+package example:messages;
+
+world messaging {
+  export send: func(msg: string);
+  export receive: func() -> string;
+}
